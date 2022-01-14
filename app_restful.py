@@ -1,7 +1,9 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
 import json
-from habilidades import Habilidades
+
+import habilidades
+from habilidades import Habilidades, Habilidade
 
 app = Flask(__name__)
 api = Api(app)
@@ -34,8 +36,13 @@ class Desenvolvedor(Resource):
 
     def put(self, id):
         dados = json.loads(request.data)
-        desenvolvedores[id] = dados
-        return dados
+        if habilidades.existeHabilidade(dados['habilidades']):
+            desenvolvedores[id] = dados
+            return dados
+        else:
+            mensagem = 'Verifique se as habilidades informadas estão cadastradas!'
+            response = {'status': 'ERRO', 'mensagem': mensagem}
+            return response
 
     def delete(self, id):
         desenvolvedores.pop(id)
@@ -48,14 +55,20 @@ class ListaDesenvolvedores(Resource):
 
     def post(self):
         dados = json.loads(request.data)
-        posicao = len(desenvolvedores)
-        dados['id'] = posicao
-        desenvolvedores.append(dados)
-        return desenvolvedores[posicao]
+        if habilidades.existeHabilidade(dados['habilidades']):
+            posicao = len(desenvolvedores)
+            dados['id'] = posicao
+            desenvolvedores.append(dados)
+            return desenvolvedores[posicao]
+        else:
+            mensagem = 'Verifique se as habilidades informadas estão cadastradas!'
+            response = {'status': 'ERRO', 'mensagem': mensagem}
+            return response
 
 api.add_resource(Desenvolvedor, '/dev/<int:id>/')
 api.add_resource(ListaDesenvolvedores, '/dev/')
 api.add_resource(Habilidades, '/habilidades/')
+api.add_resource(Habilidade, '/habilidade/<int:id>')
 
 if __name__ == '__main__':
     app.run(debug=True)
